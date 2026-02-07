@@ -1,0 +1,16 @@
+[package]
+name = "inactu-conformance-harness"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "inactu-conformance"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+inactu-spec-rs = { path = "../inactu-spec-rs" }
+inactu-spec-validate = { path = "../inactu-spec-validate" }
+serde_json.workspace = true
+walkdir.workspace = true
