@@ -7,7 +7,9 @@
   "scripts": {
     "lint": "node tools/lint-json.mjs",
     "conformance": "node tools/run-conformance.mjs",
-    "check": "npm run lint && npm run conformance"
+    "check": "npm run lint && npm run conformance",
+    "sync:manifest:spec-cli": "bash ./tools/generate-sync-manifest.sh spec-cli ../inactu-cli ./sync-manifest.spec-cli.json",
+    "sync:manifest:openapi": "bash ./tools/generate-sync-manifest.sh openapi ../inactu-control-web ./sync-manifest.openapi.json"
   },
   "devDependencies": {
     "ajv": "^8.17.1",

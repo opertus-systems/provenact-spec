@@ -12,6 +12,11 @@ schemas, and conformance vectors that runtimes, verifiers, and SDKs can pin.
 - `test-vectors/`: deterministic conformance fixtures (good/bad).
 - `docs/versioning-policy.md`: compatibility and release semantics.
 - `docs/compatibility-matrix.md`: implementation compatibility tracking.
+- `docs/repo-remediation-backlog.md`: prioritized cross-repo remediation plan.
+- `docs/source-of-truth-sync-policy.md`: sync governance for shared artifacts.
+- `docs/remediation-execution-board.md`: issue-ready execution board.
+- `tools/check-sync-parity.sh`: CI parity checker for mirrored artifacts.
+- `tools/generate-sync-manifest.sh`: machine-readable sync metadata generator.
 
 ## Stability
 
@@ -32,12 +37,23 @@ npm run check
 - Schema-vs-vector validation for all v0 and draft schema sets.
 - Capability-evaluation vector execution with expected allow/deny assertions.
 
+Rust users can run the crate-based harness:
+
+```bash
+cargo run -p inactu-conformance-harness --bin inactu-conformance
+```
+
 ## Consumers
 
 - `inactu-cli`: reference implementation and release gate.
 - `inactu-sdk`: SDK-side parsers, validators, and protocol bindings.
 - Third-party runtimes/verifiers: pin schema files and vectors by tag.
 
+Rust convenience crates are documented in `docs/rust-crates.md`.
+
 ## License
 
 Dual licensed under MIT OR Apache-2.0. See `LICENSE`.
+
+Security reporting and contribution expectations are documented in
+`SECURITY.md` and `CONTRIBUTING.md`.
