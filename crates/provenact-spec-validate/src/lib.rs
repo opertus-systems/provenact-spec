@@ -85,7 +85,7 @@ pub fn discover_repo_root(from: impl AsRef<Path>) -> Result<PathBuf> {
         }
         if !cur.pop() {
             bail!(
-                "could not discover inactu-spec repository root from {}",
+                "could not discover provenact-spec repository root from {}",
                 from.as_ref().display()
             );
         }

@@ -74,7 +74,30 @@ function normalizeFsPath(value) {
 
 function isWithinPrefix(candidate, prefix) {
   if (candidate === prefix) return true;
+  if (prefix === "/") return candidate.startsWith("/");
   return candidate.startsWith(`${prefix}/`);
+}
+
+function normalizeUriPath(value) {
+  const raw = value === "" ? "/" : value;
+  return normalizeFsPath(raw);
+}
+
+function netUriWithinPrefix(requested, allowed) {
+  if (requested.protocol !== allowed.protocol) return false;
+  if (requested.hostname !== allowed.hostname) return false;
+  if (requested.port !== allowed.port) return false;
+  if (requested.username !== allowed.username || requested.password !== allowed.password) return false;
+  if (requested.hash || allowed.search || allowed.hash) return false;
+
+  const requestedPath = normalizeUriPath(requested.pathname);
+  const allowedPath = normalizeUriPath(allowed.pathname);
+  if (!requestedPath || !allowedPath) return false;
+  return isWithinPrefix(requestedPath, allowedPath);
+}
+
+function isValidEnvName(value) {
+  return /^[A-Z_][A-Z0-9_]*$/.test(value);
 }
 
 function evaluateCapability(policy, capability) {
@@ -83,16 +106,36 @@ function evaluateCapability(policy, capability) {
   const value = capability.value;
 
   if (kind === "exec" || kind === "time") {
-    return ceiling[kind] === true;
+    return value === "true" && ceiling[kind] === true;
+  }
+
+  if (kind === "time.now") {
+    return value.length > 0 && ceiling.time === true;
+  }
+
+  if (kind === "random.bytes") {
+    return value.length > 0 && ceiling.random === true;
   }
 
   if (kind === "env") {
-    return Array.isArray(ceiling.env) && ceiling.env.includes(value);
+    return isValidEnvName(value) && Array.isArray(ceiling.env) && ceiling.env.includes(value);
   }
 
-  if (kind === "net") {
+  if (kind === "net" || kind === "net.http") {
     if (!Array.isArray(ceiling.net)) return false;
-    return ceiling.net.some((allowed) => value === allowed || value.startsWith(`${allowed}/`));
+    let requested;
+    try {
+      requested = new URL(value);
+    } catch {
+      return false;
+    }
+    return ceiling.net.some((allowed) => {
+      try {
+        return netUriWithinPrefix(requested, new URL(allowed));
+      } catch {
+        return false;
+      }
+    });
   }
 
   if (kind === "fs.read" || kind === "fs.write") {
@@ -106,6 +149,20 @@ function evaluateCapability(policy, capability) {
       if (!normalizedPrefix) return false;
       return isWithinPrefix(normalizedValue, normalizedPrefix);
     });
+  }
+
+  if (kind === "kv.read" || kind === "kv.write") {
+    const kv = ceiling.kv ?? {};
+    const key = kind.split(".")[1];
+    if (!Array.isArray(kv[key])) return false;
+    return kv[key].some((allowed) => allowed === "*" || allowed === value);
+  }
+
+  if (kind === "queue.publish" || kind === "queue.consume") {
+    const queue = ceiling.queue ?? {};
+    const key = kind.split(".")[1];
+    if (!Array.isArray(queue[key])) return false;
+    return queue[key].some((allowed) => allowed === "*" || allowed === value);
   }
 
   return false;

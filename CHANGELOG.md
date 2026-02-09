@@ -2,7 +2,7 @@
 
 ## 0.1.0 - 2026-02-07
 
-Initial standalone `inactu-spec` release:
+Initial standalone `provenact-spec` release:
 
 - promoted normative spec sources into an implementation-neutral repo
 - published JSON schemas for v0 skill, pipeline, policy, registry, and receipts

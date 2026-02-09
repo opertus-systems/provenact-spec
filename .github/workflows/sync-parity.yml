@@ -1,0 +1,46 @@
+name: sync-parity
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  spec-cli-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout provenact-spec
+        uses: actions/checkout@v4
+        with:
+          path: provenact-spec
+
+      - name: Checkout provenact-cli mirror
+        uses: actions/checkout@v4
+        with:
+          repository: opertus-systems/provenact-cli
+          path: provenact-cli
+
+      - name: Run parity check
+        shell: bash
+        run: |
+          chmod +x provenact-spec/tools/check-sync-parity.sh
+          provenact-spec/tools/check-sync-parity.sh spec-cli "$GITHUB_WORKSPACE/provenact-cli"
+
+      - name: Generate sync manifest
+        shell: bash
+        run: |
+          chmod +x provenact-spec/tools/generate-sync-manifest.sh
+          provenact-spec/tools/generate-sync-manifest.sh spec-cli "$GITHUB_WORKSPACE/provenact-cli" "$GITHUB_WORKSPACE/sync-manifest.spec-cli.json"
+
+      - name: Upload sync manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-manifest-spec-cli
+          path: ${{ github.workspace }}/sync-manifest.spec-cli.json
+
+  openapi-parity-skeleton:
+    runs-on: ubuntu-latest
+    if: ${{ false }}
+    steps:
+      - name: Placeholder
+        run: |
+          echo "Enable this job in provenact-control-web or dedicated integration repo."
