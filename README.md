@@ -1,6 +1,6 @@
-# inactu-spec
+# provenact-spec
 
-Public contract repository for Inactu.
+Public contract repository for Provenact.
 
 This repo is implementation-neutral: it defines normative protocol behavior,
 schemas, and conformance vectors that runtimes, verifiers, and SDKs can pin.
@@ -45,9 +45,11 @@ cargo run -p inactu-conformance-harness --bin inactu-conformance
 
 ## Consumers
 
-- `inactu-cli`: reference implementation and release gate.
-- `inactu-sdk`: SDK-side parsers, validators, and protocol bindings.
+- `provenact-cli`: reference implementation and release gate.
+- `provenact-sdk`: SDK-side parsers, validators, and protocol bindings.
 - Third-party runtimes/verifiers: pin schema files and vectors by tag.
+
+Note: several Rust crate IDs still use `inactu-*` naming for compatibility.
 
 Rust convenience crates are documented in `docs/rust-crates.md`.
 

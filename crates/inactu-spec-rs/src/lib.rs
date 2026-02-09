@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
+use url::Url;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SpecError {
@@ -43,9 +44,15 @@ pub struct CapabilityCeiling {
     #[serde(default)]
     pub env: Vec<String>,
     #[serde(default)]
+    pub kv: KvCeiling,
+    #[serde(default)]
+    pub queue: QueueCeiling,
+    #[serde(default)]
     pub exec: bool,
     #[serde(default)]
     pub time: bool,
+    #[serde(default)]
+    pub random: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -54,6 +61,22 @@ pub struct FsCeiling {
     pub read: Vec<String>,
     #[serde(default)]
     pub write: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct KvCeiling {
+    #[serde(default)]
+    pub read: Vec<String>,
+    #[serde(default)]
+    pub write: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct QueueCeiling {
+    #[serde(default)]
+    pub publish: Vec<String>,
+    #[serde(default)]
+    pub consume: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -197,21 +220,68 @@ fn normalize_fs_path(path: &str) -> Option<String> {
 }
 
 fn is_within_prefix(candidate: &str, prefix: &str) -> bool {
+    if prefix == "/" {
+        return candidate.starts_with('/');
+    }
     candidate == prefix || candidate.starts_with(&format!("{prefix}/"))
+}
+
+fn normalize_uri_path(path: &str) -> Option<String> {
+    let raw = if path.is_empty() { "/" } else { path };
+    normalize_fs_path(raw)
+}
+
+fn net_uri_within_prefix(requested: &Url, allowed: &Url) -> bool {
+    if !requested.has_authority() || !allowed.has_authority() {
+        return false;
+    }
+    if requested.scheme() != allowed.scheme() {
+        return false;
+    }
+    if requested.host_str() != allowed.host_str() {
+        return false;
+    }
+    if requested.port_or_known_default() != allowed.port_or_known_default() {
+        return false;
+    }
+    if requested.username() != allowed.username() || requested.password() != allowed.password() {
+        return false;
+    }
+    if requested.fragment().is_some() || allowed.query().is_some() || allowed.fragment().is_some() {
+        return false;
+    }
+    let Some(requested_path) = normalize_uri_path(requested.path()) else {
+        return false;
+    };
+    let Some(allowed_path) = normalize_uri_path(allowed.path()) else {
+        return false;
+    };
+    is_within_prefix(&requested_path, &allowed_path)
 }
 
 pub fn evaluate_capability(policy: &Policy, capability: &Capability) -> bool {
     match capability.kind.as_str() {
-        "exec" => policy.capability_ceiling.exec,
+        "exec" => capability.value == "true" && policy.capability_ceiling.exec,
+        "exec.safe" => !capability.value.is_empty() && policy.capability_ceiling.exec,
         "time" => policy.capability_ceiling.time,
+        "time.now" => !capability.value.is_empty() && policy.capability_ceiling.time,
+        "random.bytes" => !capability.value.is_empty() && policy.capability_ceiling.random,
         "env" => policy
             .capability_ceiling
             .env
             .iter()
             .any(|x| x == &capability.value),
-        "net" => policy.capability_ceiling.net.iter().any(|allowed| {
-            capability.value == *allowed || capability.value.starts_with(&format!("{allowed}/"))
-        }),
+        "net" | "net.http" => {
+            let Ok(requested) = Url::parse(&capability.value) else {
+                return false;
+            };
+            policy.capability_ceiling.net.iter().any(|allowed| {
+                Url::parse(allowed)
+                    .ok()
+                    .map(|prefix| net_uri_within_prefix(&requested, &prefix))
+                    .unwrap_or(false)
+            })
+        }
         "fs.read" | "fs.write" => {
             let value = match normalize_fs_path(&capability.value) {
                 Some(v) => v,
@@ -228,6 +298,30 @@ pub fn evaluate_capability(policy: &Policy, capability: &Capability) -> bool {
                     .unwrap_or(false)
             })
         }
+        "kv.read" => policy
+            .capability_ceiling
+            .kv
+            .read
+            .iter()
+            .any(|item| item == "*" || item == &capability.value),
+        "kv.write" => policy
+            .capability_ceiling
+            .kv
+            .write
+            .iter()
+            .any(|item| item == "*" || item == &capability.value),
+        "queue.publish" => policy
+            .capability_ceiling
+            .queue
+            .publish
+            .iter()
+            .any(|item| item == "*" || item == &capability.value),
+        "queue.consume" => policy
+            .capability_ceiling
+            .queue
+            .consume
+            .iter()
+            .any(|item| item == "*" || item == &capability.value),
         _ => false,
     }
 }
