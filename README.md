@@ -40,7 +40,7 @@ npm run check
 Rust users can run the crate-based harness:
 
 ```bash
-cargo run -p inactu-conformance-harness --bin inactu-conformance
+cargo run -p provenact-conformance-harness --bin provenact-conformance
 ```
 
 ## Consumers
@@ -49,7 +49,7 @@ cargo run -p inactu-conformance-harness --bin inactu-conformance
 - `provenact-sdk`: SDK-side parsers, validators, and protocol bindings.
 - Third-party runtimes/verifiers: pin schema files and vectors by tag.
 
-Note: several Rust crate IDs still use `inactu-*` naming for compatibility.
+Note: several Rust crate IDs still use `provenact-*` naming for compatibility.
 
 Rust convenience crates are documented in `docs/rust-crates.md`.
 

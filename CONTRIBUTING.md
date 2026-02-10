@@ -1,6 +1,6 @@
 # Contributing
 
-`inactu-spec` defines normative contracts and vectors. Changes here affect every consumer.
+`provenact-spec` defines normative contracts and vectors. Changes here affect every consumer.
 
 ## Rules
 
@@ -15,5 +15,5 @@
 Before opening a PR:
 
 1. `npm run check`
-2. `cargo run -p inactu-conformance-harness --bin inactu-conformance`
+2. `cargo run -p provenact-conformance-harness --bin provenact-conformance`
 3. Update changelog/docs for contract-impacting changes.

@@ -1,8 +1,8 @@
 # SECURITY.md
 
-## Security Policy — inactu-spec
+## Security Policy — provenact-spec
 
-`inactu-spec` is a contract repository. Security issues in schemas/vectors can propagate ecosystem-wide.
+`provenact-spec` is a contract repository. Security issues in schemas/vectors can propagate ecosystem-wide.
 
 ### Scope
 

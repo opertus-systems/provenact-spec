@@ -52,7 +52,7 @@ case "$MODE" in
     ;;
 
   openapi)
-    SRC_OPENAPI="$ROOT_DIR/../inactu-control/openapi.yaml"
+    SRC_OPENAPI="$ROOT_DIR/../provenact-control/openapi.yaml"
     DST_OPENAPI="$TARGET_REPO/public/openapi.yaml"
 
     [[ -f "$SRC_OPENAPI" ]] || die "missing source openapi: $SRC_OPENAPI"

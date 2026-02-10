@@ -9,15 +9,15 @@ Use this board to open and track concrete remediation issues across repositories
 
 | ID | Priority | Owner Repo(s) | Status | Target Date | Issue Link |
 | --- | --- | --- | --- | --- | --- |
-| P0-1 | P0 | `inactu-cli`, `inactu-spec` | Todo | 2026-02-10 | _create issue_ |
-| P0-2 | P0 | `inactu-agent-kit` | Todo | 2026-02-10 | _create issue_ |
-| P1-1 | P1 | `inactu-sdk`, `inactu-control`, `inactu-skills`, `inactu-cli` | Todo | 2026-02-14 | _create issue_ |
-| P1-2 | P1 | `inactu-control` | Todo | 2026-02-18 | _create issue_ |
-| P1-3 | P1 | `inactu-control-web` | Todo | 2026-02-18 | _create issue_ |
-| P1-4 | P1 | `inactu-control-web` | Todo | 2026-02-18 | _create issue_ |
+| P0-1 | P0 | `provenact-cli`, `provenact-spec` | Todo | 2026-02-10 | _create issue_ |
+| P0-2 | P0 | `provenact-agent-kit` | Todo | 2026-02-10 | _create issue_ |
+| P1-1 | P1 | `provenact-sdk`, `provenact-control`, `provenact-skills`, `provenact-cli` | Todo | 2026-02-14 | _create issue_ |
+| P1-2 | P1 | `provenact-control` | Todo | 2026-02-18 | _create issue_ |
+| P1-3 | P1 | `provenact-control-web` | Todo | 2026-02-18 | _create issue_ |
+| P1-4 | P1 | `provenact-control-web` | Todo | 2026-02-18 | _create issue_ |
 | P2-1 | P2 | all repos | Todo | 2026-02-24 | _create issue_ |
-| P2-2 | P2 | `inactu-control-web`, `inactu-control`, `inactu-cli`, `inactu-spec` | Todo | 2026-02-24 | _create issue_ |
-| P2-3 | P2 | `inactu-control`, `inactu-control-web` | Todo | 2026-02-24 | _create issue_ |
+| P2-2 | P2 | `provenact-control-web`, `provenact-control`, `provenact-cli`, `provenact-spec` | Todo | 2026-02-24 | _create issue_ |
+| P2-3 | P2 | `provenact-control`, `provenact-control-web` | Todo | 2026-02-24 | _create issue_ |
 
 ## Issue Template (Copy/Paste)
 
@@ -61,16 +61,16 @@ Out of scope:
 ## Starter Issue Bodies
 
 ### P0-1
-- Title: `[P0-1] Patch time crate DoS advisory in inactu-cli and inactu-spec`
+- Title: `[P0-1] Patch time crate DoS advisory in provenact-cli and provenact-spec`
 - Acceptance criteria:
 1. No `time 0.3.36` in lockfiles.
 2. `cargo audit` clean for advisory `RUSTSEC-2026-0009`.
 3. Tests pass in both repos.
 
 ### P0-2
-- Title: `[P0-2] Resolve keys_digest contract drift in inactu-agent-kit`
+- Title: `[P0-2] Resolve keys_digest contract drift in provenact-agent-kit`
 - Acceptance criteria:
-1. Unit tests pass in `inactu-agent-kit`.
+1. Unit tests pass in `provenact-agent-kit`.
 2. Behavior and README contract match.
 3. Negative test covers missing/invalid digest behavior.
 
@@ -89,14 +89,14 @@ Out of scope:
 3. Ops docs include failure modes and TTL behavior.
 
 ### P1-3
-- Title: `[P1-3] Add registration abuse protections in inactu-control-web`
+- Title: `[P1-3] Add registration abuse protections in provenact-control-web`
 - Acceptance criteria:
 1. Registration route has explicit throttling.
 2. Tests cover flood/brute-force cases.
 3. README documents production defaults.
 
 ### P1-4
-- Title: `[P1-4] Add CSP and HSTS baseline headers in inactu-control-web`
+- Title: `[P1-4] Add CSP and HSTS baseline headers in provenact-control-web`
 - Acceptance criteria:
 1. CSP and HSTS are enforced in production mode.
 2. Header presence is tested.

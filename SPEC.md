@@ -1,10 +1,10 @@
-# Inactu Specification (v0)
+# Provenact Specification (v0)
 
-This file is the normative index for Inactu contracts.
+This file is the normative index for Provenact contracts.
 
 ## Scope
 
-Inactu is a secure execution substrate for immutable, verifiable skills.
+Provenact is a secure execution substrate for immutable, verifiable skills.
 
 In scope:
 - skill packaging and identity
@@ -55,4 +55,4 @@ Deterministic vectors for the normative contract are published in
 
 ## Policy Boundary
 
-Inactu executes verified skills. Agent orchestration belongs outside this repo.
+Provenact executes verified skills. Agent orchestration belongs outside this repo.

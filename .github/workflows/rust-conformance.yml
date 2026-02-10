@@ -13,4 +13,4 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo fmt --all -- --check
       - run: cargo test --workspace
-      - run: cargo run -p inactu-conformance-harness --bin inactu-conformance
+      - run: cargo run -p provenact-conformance-harness --bin provenact-conformance

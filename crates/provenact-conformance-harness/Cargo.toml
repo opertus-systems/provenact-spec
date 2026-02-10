@@ -1,16 +1,16 @@
 [package]
-name = "inactu-conformance-harness"
+name = "provenact-conformance-harness"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "inactu-conformance"
+name = "provenact-conformance"
 path = "src/main.rs"
 
 [dependencies]
 anyhow.workspace = true
-inactu-spec-rs = { path = "../inactu-spec-rs" }
-inactu-spec-validate = { path = "../inactu-spec-validate" }
+provenact-spec-rs = { path = "../provenact-spec-rs" }
+provenact-spec-validate = { path = "../provenact-spec-validate" }
 serde_json.workspace = true
 walkdir.workspace = true

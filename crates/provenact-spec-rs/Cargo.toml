@@ -1,5 +1,5 @@
 [package]
-name = "inactu-spec-rs"
+name = "provenact-spec-rs"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

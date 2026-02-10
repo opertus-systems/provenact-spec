@@ -1,9 +1,9 @@
 use anyhow::{bail, Context, Result};
-use inactu_spec_rs::{
+use provenact_spec_rs::{
     evaluate_capability, parse_json, verify_receipt_hash, verify_snapshot_hash,
     CapabilityEvalVector, ExecutionReceipt, RegistrySnapshot,
 };
-use inactu_spec_validate::SchemaStore;
+use provenact_spec_validate::SchemaStore;
 use std::path::Path;
 
 #[derive(Debug, Clone)]
@@ -223,7 +223,7 @@ pub fn run_all(root: &Path) -> Result<Report> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use inactu_spec_validate::discover_repo_root;
+    use provenact_spec_validate::discover_repo_root;
 
     #[test]
     fn conformance_suite_passes() {

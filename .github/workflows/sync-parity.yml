@@ -8,28 +8,28 @@ jobs:
   spec-cli-parity:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout inactu-spec
+      - name: Checkout provenact-spec
         uses: actions/checkout@v4
         with:
-          path: inactu-spec
+          path: provenact-spec
 
-      - name: Checkout inactu-cli mirror
+      - name: Checkout provenact-cli mirror
         uses: actions/checkout@v4
         with:
-          repository: opertus-systems/inactu-cli
-          path: inactu-cli
+          repository: opertus-systems/provenact-cli
+          path: provenact-cli
 
       - name: Run parity check
         shell: bash
         run: |
-          chmod +x inactu-spec/tools/check-sync-parity.sh
-          inactu-spec/tools/check-sync-parity.sh spec-cli "$GITHUB_WORKSPACE/inactu-cli"
+          chmod +x provenact-spec/tools/check-sync-parity.sh
+          provenact-spec/tools/check-sync-parity.sh spec-cli "$GITHUB_WORKSPACE/provenact-cli"
 
       - name: Generate sync manifest
         shell: bash
         run: |
-          chmod +x inactu-spec/tools/generate-sync-manifest.sh
-          inactu-spec/tools/generate-sync-manifest.sh spec-cli "$GITHUB_WORKSPACE/inactu-cli" "$GITHUB_WORKSPACE/sync-manifest.spec-cli.json"
+          chmod +x provenact-spec/tools/generate-sync-manifest.sh
+          provenact-spec/tools/generate-sync-manifest.sh spec-cli "$GITHUB_WORKSPACE/provenact-cli" "$GITHUB_WORKSPACE/sync-manifest.spec-cli.json"
 
       - name: Upload sync manifest
         uses: actions/upload-artifact@v4
@@ -43,4 +43,4 @@ jobs:
     steps:
       - name: Placeholder
         run: |
-          echo "Enable this job in inactu-control-web or dedicated integration repo."
+          echo "Enable this job in provenact-control-web or dedicated integration repo."

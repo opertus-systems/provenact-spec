@@ -53,7 +53,7 @@ require_cmd awk
 [[ -n "$TARGET_REPO" ]] || die "usage: $0 <spec-cli|openapi> <target-repo-path> [output-json]"
 [[ -d "$TARGET_REPO/.git" ]] || die "target repo path must be a git checkout: $TARGET_REPO"
 
-source_repo_name="inactu-spec"
+source_repo_name="provenact-spec"
 source_commit="$(git -C "$ROOT_DIR" rev-parse HEAD)"
 target_repo_name="$(basename "$TARGET_REPO")"
 target_commit="$(git -C "$TARGET_REPO" rev-parse HEAD)"
@@ -119,8 +119,8 @@ EOF
     ;;
 
   openapi)
-    source_repo_name="inactu-control"
-    src_openapi="${OPENAPI_SOURCE_FILE:-$ROOT_DIR/../inactu-control/openapi.yaml}"
+    source_repo_name="provenact-control"
+    src_openapi="${OPENAPI_SOURCE_FILE:-$ROOT_DIR/../provenact-control/openapi.yaml}"
     dst_openapi="$TARGET_REPO/public/openapi.yaml"
     [[ -f "$src_openapi" ]] || die "missing source openapi file: $src_openapi"
     [[ -f "$dst_openapi" ]] || die "missing target openapi file: $dst_openapi"

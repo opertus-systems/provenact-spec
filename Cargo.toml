@@ -1,8 +1,8 @@
 [workspace]
 members = [
-  "crates/inactu-spec-rs",
-  "crates/inactu-spec-validate",
-  "crates/inactu-conformance-harness",
+  "crates/provenact-spec-rs",
+  "crates/provenact-spec-validate",
+  "crates/provenact-conformance-harness",
 ]
 resolver = "2"
 
