@@ -4,11 +4,11 @@
   "nodes": [
     {
       "id": "a",
-      "skill": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "skill": "com.opertus.a@0.1.0"
     },
     {
       "id": "b",
-      "skill": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      "skill": "com.opertus.b@0.1.0"
     }
   ],
   "edges": [
@@ -32,6 +32,5 @@
         }
       ]
     }
-  ],
-  "input_mapping": []
+  ]
 }

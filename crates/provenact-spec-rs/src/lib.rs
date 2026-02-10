@@ -263,14 +263,19 @@ pub fn evaluate_capability(policy: &Policy, capability: &Capability) -> bool {
     match capability.kind.as_str() {
         "exec" => capability.value == "true" && policy.capability_ceiling.exec,
         "exec.safe" => !capability.value.is_empty() && policy.capability_ceiling.exec,
-        "time" => policy.capability_ceiling.time,
+        "time" => capability.value == "true" && policy.capability_ceiling.time,
         "time.now" => !capability.value.is_empty() && policy.capability_ceiling.time,
         "random.bytes" => !capability.value.is_empty() && policy.capability_ceiling.random,
-        "env" => policy
-            .capability_ceiling
-            .env
-            .iter()
-            .any(|x| x == &capability.value),
+        "env" => {
+            if !is_valid_env_name(&capability.value) {
+                return false;
+            }
+            policy
+                .capability_ceiling
+                .env
+                .iter()
+                .any(|x| x == &capability.value)
+        }
         "net" | "net.http" => {
             let Ok(requested) = Url::parse(&capability.value) else {
                 return false;
@@ -326,6 +331,17 @@ pub fn evaluate_capability(policy: &Policy, capability: &Capability) -> bool {
     }
 }
 
+fn is_valid_env_name(value: &str) -> bool {
+    let mut chars = value.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    if !(first == '_' || first.is_ascii_uppercase()) {
+        return false;
+    }
+    chars.all(|c| c == '_' || c.is_ascii_uppercase() || c.is_ascii_digit())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -345,5 +361,49 @@ mod tests {
         };
         receipt.receipt_hash = compute_receipt_hash(&receipt).unwrap();
         verify_receipt_hash(&receipt).unwrap();
+    }
+
+    #[test]
+    fn time_capability_requires_true_value() {
+        let policy = Policy {
+            version: 1,
+            trusted_signers: vec!["alice.dev".to_string()],
+            capability_ceiling: CapabilityCeiling {
+                time: true,
+                ..CapabilityCeiling::default()
+            },
+        };
+        let allowed = Capability {
+            kind: "time".to_string(),
+            value: "true".to_string(),
+        };
+        let denied = Capability {
+            kind: "time".to_string(),
+            value: "1".to_string(),
+        };
+        assert!(evaluate_capability(&policy, &allowed));
+        assert!(!evaluate_capability(&policy, &denied));
+    }
+
+    #[test]
+    fn env_capability_requires_posix_style_name() {
+        let policy = Policy {
+            version: 1,
+            trusted_signers: vec!["alice.dev".to_string()],
+            capability_ceiling: CapabilityCeiling {
+                env: vec!["HOME".to_string(), "PATH".to_string()],
+                ..CapabilityCeiling::default()
+            },
+        };
+        let allowed = Capability {
+            kind: "env".to_string(),
+            value: "HOME".to_string(),
+        };
+        let denied = Capability {
+            kind: "env".to_string(),
+            value: "home".to_string(),
+        };
+        assert!(evaluate_capability(&policy, &allowed));
+        assert!(!evaluate_capability(&policy, &denied));
     }
 }
