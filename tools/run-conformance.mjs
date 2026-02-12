@@ -82,7 +82,9 @@ function isWithinPrefix(candidate, prefix) {
 }
 
 function normalizeUriPath(value) {
-  return normalizeFsPath(value === "" ? "/" : value);
+  const raw = value === "" ? "/" : value;
+  if (raw.includes("\\") || /%[0-9A-Fa-f]{2}/.test(raw)) return null;
+  return normalizeFsPath(raw);
 }
 
 function netUriWithinPrefix(requested, allowed) {

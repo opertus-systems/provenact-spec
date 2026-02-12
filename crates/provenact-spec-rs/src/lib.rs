@@ -262,7 +262,16 @@ fn is_within_prefix(candidate: &str, prefix: &str) -> bool {
 
 fn normalize_uri_path(path: &str) -> Option<String> {
     let raw = if path.is_empty() { "/" } else { path };
+    if raw.contains('\\') || contains_pct_encoded_triplet(raw) {
+        return None;
+    }
     normalize_fs_path(raw)
+}
+
+fn contains_pct_encoded_triplet(value: &str) -> bool {
+    value.as_bytes().windows(3).any(|window| {
+        window[0] == b'%' && window[1].is_ascii_hexdigit() && window[2].is_ascii_hexdigit()
+    })
 }
 
 fn net_uri_within_prefix(requested: &Url, allowed: &Url) -> bool {
@@ -532,5 +541,22 @@ mod tests {
         };
         assert!(evaluate_capability(&policy, &allowed));
         assert!(!evaluate_capability(&policy, &denied));
+    }
+
+    #[test]
+    fn net_http_rejects_percent_encoded_path_bytes() {
+        let policy = Policy {
+            version: 1,
+            trusted_signers: vec!["alice.dev".to_string()],
+            capability_ceiling: CapabilityCeiling {
+                net: vec!["https://api.example.test/v1".to_string()],
+                ..CapabilityCeiling::default()
+            },
+        };
+        let escaped = Capability {
+            kind: "net.http".to_string(),
+            value: "https://api.example.test/v1/%2f..%2fadmin".to_string(),
+        };
+        assert!(!evaluate_capability(&policy, &escaped));
     }
 }
