@@ -12,11 +12,14 @@ pub enum SpecError {
     CanonicalJson,
     #[error("invalid sha256 format: {0}")]
     InvalidSha256(String),
+    #[error("invalid md5 format: {0}")]
+    InvalidMd5(String),
     #[error("hash mismatch: expected={expected} actual={actual}")]
     HashMismatch { expected: String, actual: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Manifest {
     pub name: String,
     pub version: String,
@@ -27,6 +30,7 @@ pub struct Manifest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Policy {
     pub version: u64,
     #[serde(default)]
@@ -36,6 +40,7 @@ pub struct Policy {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct CapabilityCeiling {
     #[serde(default)]
     pub fs: FsCeiling,
@@ -56,6 +61,7 @@ pub struct CapabilityCeiling {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct FsCeiling {
     #[serde(default)]
     pub read: Vec<String>,
@@ -64,6 +70,7 @@ pub struct FsCeiling {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct KvCeiling {
     #[serde(default)]
     pub read: Vec<String>,
@@ -72,6 +79,7 @@ pub struct KvCeiling {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct QueueCeiling {
     #[serde(default)]
     pub publish: Vec<String>,
@@ -80,6 +88,7 @@ pub struct QueueCeiling {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ExecutionReceipt {
     pub artifact: String,
     pub inputs_hash: String,
@@ -90,6 +99,7 @@ pub struct ExecutionReceipt {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct RegistrySnapshot {
     pub timestamp: u64,
     pub entries: BTreeMap<String, SnapshotEntry>,
@@ -97,12 +107,14 @@ pub struct RegistrySnapshot {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SnapshotEntry {
     pub sha256: String,
     pub md5: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CapabilityEvalVector {
     pub name: String,
     pub policy: Policy,
@@ -110,6 +122,7 @@ pub struct CapabilityEvalVector {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CapabilityCase {
     pub capability: Capability,
     pub expect: String,
@@ -118,6 +131,7 @@ pub struct CapabilityCase {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Capability {
     pub kind: String,
     pub value: String,
@@ -141,6 +155,19 @@ pub fn validate_sha256_prefixed(value: &str) -> Result<(), SpecError> {
     }
     if value.chars().skip(7).any(|c| c.is_ascii_uppercase()) {
         return Err(SpecError::InvalidSha256(value.to_string()));
+    }
+    Ok(())
+}
+
+fn validate_md5_hex(value: &str) -> Result<(), SpecError> {
+    if value.len() != 32 {
+        return Err(SpecError::InvalidMd5(value.to_string()));
+    }
+    if !value.as_bytes().iter().all(u8::is_ascii_hexdigit) {
+        return Err(SpecError::InvalidMd5(value.to_string()));
+    }
+    if value.chars().any(|c| c.is_ascii_uppercase()) {
+        return Err(SpecError::InvalidMd5(value.to_string()));
     }
     Ok(())
 }
@@ -169,6 +196,9 @@ pub fn compute_receipt_hash(receipt: &ExecutionReceipt) -> Result<String, SpecEr
 }
 
 pub fn verify_receipt_hash(receipt: &ExecutionReceipt) -> Result<(), SpecError> {
+    validate_sha256_prefixed(&receipt.artifact)?;
+    validate_sha256_prefixed(&receipt.inputs_hash)?;
+    validate_sha256_prefixed(&receipt.outputs_hash)?;
     validate_sha256_prefixed(&receipt.receipt_hash)?;
     let actual = compute_receipt_hash(receipt)?;
     if actual == receipt.receipt_hash {
@@ -190,6 +220,10 @@ pub fn compute_snapshot_hash(snapshot: &RegistrySnapshot) -> Result<String, Spec
 }
 
 pub fn verify_snapshot_hash(snapshot: &RegistrySnapshot) -> Result<(), SpecError> {
+    for entry in snapshot.entries.values() {
+        validate_sha256_prefixed(&entry.sha256)?;
+        validate_md5_hex(&entry.md5)?;
+    }
     validate_sha256_prefixed(&snapshot.snapshot_hash)?;
     let actual = compute_snapshot_hash(snapshot)?;
     if actual == snapshot.snapshot_hash {
@@ -263,7 +297,6 @@ pub fn evaluate_capability(policy: &Policy, capability: &Capability) -> bool {
     match capability.kind.as_str() {
         "exec" => capability.value == "true" && policy.capability_ceiling.exec,
         "exec.safe" => !capability.value.is_empty() && policy.capability_ceiling.exec,
-        "time" => capability.value == "true" && policy.capability_ceiling.time,
         "time.now" => !capability.value.is_empty() && policy.capability_ceiling.time,
         "random.bytes" => !capability.value.is_empty() && policy.capability_ceiling.random,
         "env" => {
@@ -276,7 +309,7 @@ pub fn evaluate_capability(policy: &Policy, capability: &Capability) -> bool {
                 .iter()
                 .any(|x| x == &capability.value)
         }
-        "net" | "net.http" => {
+        "net.http" => {
             let Ok(requested) = Url::parse(&capability.value) else {
                 return false;
             };
@@ -346,15 +379,16 @@ fn is_valid_env_name(value: &str) -> bool {
 mod tests {
     use super::*;
 
+    fn sha(c: char) -> String {
+        format!("sha256:{}", c.to_string().repeat(64))
+    }
+
     #[test]
     fn receipt_hash_round_trip() {
         let mut receipt = ExecutionReceipt {
-            artifact: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                .into(),
-            inputs_hash: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-                .into(),
-            outputs_hash: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-                .into(),
+            artifact: sha('a'),
+            inputs_hash: sha('b'),
+            outputs_hash: sha('c'),
             caps_used: vec!["fs.read".into()],
             timestamp: 1,
             receipt_hash: String::new(),
@@ -364,7 +398,100 @@ mod tests {
     }
 
     #[test]
-    fn time_capability_requires_true_value() {
+    fn receipt_hash_rejects_invalid_component_digests() {
+        let mut receipt = ExecutionReceipt {
+            artifact: sha('a'),
+            inputs_hash: sha('b'),
+            outputs_hash: sha('c'),
+            caps_used: vec!["fs.read".into()],
+            timestamp: 1,
+            receipt_hash: String::new(),
+        };
+        receipt.receipt_hash = compute_receipt_hash(&receipt).unwrap();
+
+        let invalid_artifact = format!("sha256:{}A", "a".repeat(63));
+        let mut artifact_bad = receipt.clone();
+        artifact_bad.artifact = invalid_artifact.clone();
+        assert!(matches!(
+            verify_receipt_hash(&artifact_bad),
+            Err(SpecError::InvalidSha256(value)) if value == invalid_artifact
+        ));
+
+        let invalid_inputs = "sha256:short".to_string();
+        let mut inputs_bad = receipt.clone();
+        inputs_bad.inputs_hash = invalid_inputs.clone();
+        assert!(matches!(
+            verify_receipt_hash(&inputs_bad),
+            Err(SpecError::InvalidSha256(value)) if value == invalid_inputs
+        ));
+
+        let invalid_outputs = "md5:ffffffffffffffffffffffffffffffff".to_string();
+        let mut outputs_bad = receipt.clone();
+        outputs_bad.outputs_hash = invalid_outputs.clone();
+        assert!(matches!(
+            verify_receipt_hash(&outputs_bad),
+            Err(SpecError::InvalidSha256(value)) if value == invalid_outputs
+        ));
+    }
+
+    #[test]
+    fn parse_json_rejects_unknown_fields() {
+        let raw = serde_json::json!({
+            "artifact": sha('a'),
+            "inputs_hash": sha('b'),
+            "outputs_hash": sha('c'),
+            "caps_used": ["fs.read"],
+            "timestamp": 1,
+            "receipt_hash": sha('d'),
+            "unexpected": true
+        })
+        .to_string();
+        assert!(matches!(
+            parse_json::<ExecutionReceipt>(&raw),
+            Err(SpecError::InvalidJson(_))
+        ));
+    }
+
+    #[test]
+    fn snapshot_hash_rejects_malformed_entry_digests() {
+        let mut snapshot_bad_sha = RegistrySnapshot {
+            timestamp: 1,
+            entries: BTreeMap::from([(
+                "skill-a".to_string(),
+                SnapshotEntry {
+                    sha256: "sha256:not-a-real-digest".to_string(),
+                    md5: "0123456789abcdef0123456789abcdef".to_string(),
+                },
+            )]),
+            snapshot_hash: String::new(),
+        };
+        snapshot_bad_sha.snapshot_hash = compute_snapshot_hash(&snapshot_bad_sha).unwrap();
+        assert!(matches!(
+            verify_snapshot_hash(&snapshot_bad_sha),
+            Err(SpecError::InvalidSha256(value)) if value == "sha256:not-a-real-digest"
+        ));
+
+        let invalid_md5 = "0123456789abcdef0123456789abcdeF".to_string();
+        let mut snapshot_bad_md5 = RegistrySnapshot {
+            timestamp: 1,
+            entries: BTreeMap::from([(
+                "skill-b".to_string(),
+                SnapshotEntry {
+                    sha256: sha('a'),
+                    md5: invalid_md5.clone(),
+                },
+            )]),
+            snapshot_hash: String::new(),
+        };
+        snapshot_bad_md5.snapshot_hash = compute_snapshot_hash(&snapshot_bad_md5).unwrap();
+        assert!(matches!(
+            verify_snapshot_hash(&snapshot_bad_md5),
+            Err(SpecError::InvalidMd5(value)) if value == invalid_md5
+        ));
+    }
+
+    #[test]
+    fn time_now_capability_requires_non_empty_value() {
         let policy = Policy {
             version: 1,
             trusted_signers: vec!["alice.dev".to_string()],
@@ -374,12 +501,12 @@ mod tests {
             },
         };
         let allowed = Capability {
-            kind: "time".to_string(),
-            value: "true".to_string(),
+            kind: "time.now".to_string(),
+            value: "utc".to_string(),
         };
         let denied = Capability {
-            kind: "time".to_string(),
-            value: "1".to_string(),
+            kind: "time.now".to_string(),
+            value: "".to_string(),
         };
         assert!(evaluate_capability(&policy, &allowed));
         assert!(!evaluate_capability(&policy, &denied));

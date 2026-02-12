@@ -82,15 +82,27 @@ function evaluateCapability(policy, capability) {
   const kind = capability.kind;
   const value = capability.value;
 
-  if (kind === "exec" || kind === "time") {
-    return ceiling[kind] === true;
+  if (kind === "exec") {
+    return value === "true" && ceiling.exec === true;
+  }
+
+  if (kind === "exec.safe") {
+    return value.length > 0 && ceiling.exec === true;
+  }
+
+  if (kind === "time.now") {
+    return value.length > 0 && ceiling.time === true;
+  }
+
+  if (kind === "random.bytes") {
+    return value.length > 0 && ceiling.random === true;
   }
 
   if (kind === "env") {
     return Array.isArray(ceiling.env) && ceiling.env.includes(value);
   }
 
-  if (kind === "net") {
+  if (kind === "net.http") {
     if (!Array.isArray(ceiling.net)) return false;
     return ceiling.net.some((allowed) => value === allowed || value.startsWith(`${allowed}/`));
   }
@@ -106,6 +118,20 @@ function evaluateCapability(policy, capability) {
       if (!normalizedPrefix) return false;
       return isWithinPrefix(normalizedValue, normalizedPrefix);
     });
+  }
+
+  if (kind === "kv.read" || kind === "kv.write") {
+    const kvCaps = ceiling.kv ?? {};
+    const key = kind.split(".")[1];
+    if (!Array.isArray(kvCaps[key])) return false;
+    return kvCaps[key].includes("*") || kvCaps[key].includes(value);
+  }
+
+  if (kind === "queue.publish" || kind === "queue.consume") {
+    const queueCaps = ceiling.queue ?? {};
+    const key = kind.split(".")[1];
+    if (!Array.isArray(queueCaps[key])) return false;
+    return queueCaps[key].includes("*") || queueCaps[key].includes(value);
   }
 
   return false;

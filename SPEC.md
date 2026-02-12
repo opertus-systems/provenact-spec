@@ -21,9 +21,6 @@ Out of scope:
 
 The following files define the `v0` contract:
 
-- `spec/v0.md`
-- `spec/v0/skill-manifest.schema.json`
-- `spec/v0/pipeline.schema.json`
 - `spec/threat-model.md`
 - `spec/compatibility.md`
 - `spec/hashing.md`
@@ -42,6 +39,12 @@ The following files define the `v0` contract:
 - `spec/execution-receipt.schema.json`
 - `spec/registry/registry.md`
 - `spec/registry/snapshot.schema.json`
+
+Legacy reference files (non-normative):
+
+- `spec/v0.md`
+- `spec/v0/skill-manifest.schema.json`
+- `spec/v0/pipeline.schema.json`
 
 ## Versioning
 
