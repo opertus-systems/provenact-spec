@@ -128,10 +128,8 @@ fn check_hash_semantics(store: &SchemaStore) -> Result<usize> {
     for bad in files(store.root(), "test-vectors/registry/snapshot/bad")? {
         let raw = std::fs::read_to_string(store.root().join(&bad))?;
         let snapshot: RegistrySnapshot = parse_json(&raw)?;
-        if bad.ends_with("hash-mismatch.json") {
-            if verify_snapshot_hash(&snapshot).is_ok() {
-                bail!("expected snapshot hash mismatch: {bad}");
-            }
+        if verify_snapshot_hash(&snapshot).is_ok() {
+            bail!("expected snapshot hash verification failure: {bad}");
         }
         checks += 1;
     }

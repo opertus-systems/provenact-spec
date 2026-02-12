@@ -66,15 +66,40 @@ function assertSchemaGroup({ schemaFile, goodDir, badDir, semanticBad = [] }) {
 function normalizeFsPath(value) {
   if (!value.startsWith("/")) return null;
   if (value.includes("\0")) return null;
-  const normalized = path.posix.normalize(value);
-  if (!normalized.startsWith("/")) return null;
-  if (normalized.includes("..")) return null;
-  return normalized;
+  const parts = [];
+  for (const segment of value.split("/")) {
+    if (!segment || segment === ".") continue;
+    if (segment === "..") return null;
+    parts.push(segment);
+  }
+  return `/${parts.join("/")}`;
 }
 
 function isWithinPrefix(candidate, prefix) {
+  if (prefix === "/") return candidate.startsWith("/");
   if (candidate === prefix) return true;
   return candidate.startsWith(`${prefix}/`);
+}
+
+function normalizeUriPath(value) {
+  return normalizeFsPath(value === "" ? "/" : value);
+}
+
+function netUriWithinPrefix(requested, allowed) {
+  if (requested.protocol !== allowed.protocol) return false;
+  if (requested.hostname !== allowed.hostname) return false;
+  if (requested.port !== allowed.port) return false;
+  if (requested.username !== allowed.username || requested.password !== allowed.password) return false;
+  if (requested.hash || allowed.search || allowed.hash) return false;
+
+  const requestedPath = normalizeUriPath(requested.pathname);
+  const allowedPath = normalizeUriPath(allowed.pathname);
+  if (!requestedPath || !allowedPath) return false;
+  return isWithinPrefix(requestedPath, allowedPath);
+}
+
+function isValidEnvName(value) {
+  return /^[A-Z_][A-Z0-9_]*$/.test(value);
 }
 
 function evaluateCapability(policy, capability) {
@@ -99,12 +124,24 @@ function evaluateCapability(policy, capability) {
   }
 
   if (kind === "env") {
-    return Array.isArray(ceiling.env) && ceiling.env.includes(value);
+    return isValidEnvName(value) && Array.isArray(ceiling.env) && ceiling.env.includes(value);
   }
 
   if (kind === "net.http") {
     if (!Array.isArray(ceiling.net)) return false;
-    return ceiling.net.some((allowed) => value === allowed || value.startsWith(`${allowed}/`));
+    let requested;
+    try {
+      requested = new URL(value);
+    } catch {
+      return false;
+    }
+    return ceiling.net.some((allowed) => {
+      try {
+        return netUriWithinPrefix(requested, new URL(allowed));
+      } catch {
+        return false;
+      }
+    });
   }
 
   if (kind === "fs.read" || kind === "fs.write") {
