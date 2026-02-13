@@ -44,9 +44,9 @@ impl SchemaStore {
         let schema = self
             .schemas
             .get(schema_rel)
-            .ok_or_else(|| anyhow!("unknown schema {}", schema_rel))?;
+            .ok_or_else(|| anyhow!("unknown schema {schema_rel}"))?;
         if !jsonschema::is_valid(schema, value) {
-            bail!("schema {} validation failed", schema_rel);
+            bail!("schema {schema_rel} validation failed");
         }
         Ok(())
     }
