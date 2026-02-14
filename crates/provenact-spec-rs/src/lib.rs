@@ -242,8 +242,11 @@ fn normalize_fs_path(path: &str) -> Option<String> {
     }
     let mut parts = Vec::new();
     for segment in path.split('/') {
-        if segment.is_empty() || segment == "." {
+        if segment.is_empty() {
             continue;
+        }
+        if segment == "." {
+            return None;
         }
         if segment == ".." {
             return None;
@@ -554,6 +557,43 @@ mod tests {
             value: "https://api.example.test/v1/%2f..%2fadmin".to_string(),
         };
         assert!(!evaluate_capability(&policy, &escaped));
+    }
+
+    #[test]
+    fn net_http_accepts_equivalent_default_https_port() {
+        let policy = Policy {
+            version: 1,
+            trusted_signers: vec!["alice.dev".to_string()],
+            capability_ceiling: CapabilityCeiling {
+                net: vec!["https://api.example.test/v1".to_string()],
+                ..CapabilityCeiling::default()
+            },
+        };
+        let requested = Capability {
+            kind: "net.http".to_string(),
+            value: "https://api.example.test:443/v1/forecast".to_string(),
+        };
+        assert!(evaluate_capability(&policy, &requested));
+    }
+
+    #[test]
+    fn fs_capability_rejects_dot_segment_paths() {
+        let policy = Policy {
+            version: 1,
+            trusted_signers: vec!["alice.dev".to_string()],
+            capability_ceiling: CapabilityCeiling {
+                fs: FsCeiling {
+                    read: vec!["/tmp".to_string()],
+                    write: vec!["/tmp".to_string()],
+                },
+                ..CapabilityCeiling::default()
+            },
+        };
+        let requested = Capability {
+            kind: "fs.read".to_string(),
+            value: "/tmp/./report.json".to_string(),
+        };
+        assert!(!evaluate_capability(&policy, &requested));
     }
 
     #[test]
