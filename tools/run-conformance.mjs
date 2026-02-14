@@ -68,7 +68,8 @@ function normalizeFsPath(value) {
   if (value.includes("\0")) return null;
   const parts = [];
   for (const segment of value.split("/")) {
-    if (!segment || segment === ".") continue;
+    if (!segment) continue;
+    if (segment === ".") return null;
     if (segment === "..") return null;
     parts.push(segment);
   }
@@ -87,10 +88,22 @@ function normalizeUriPath(value) {
   return normalizeFsPath(raw);
 }
 
+function hasAuthority(url) {
+  return url.host.length > 0;
+}
+
+function effectivePort(url) {
+  if (url.port) return url.port;
+  if (url.protocol === "https:") return "443";
+  if (url.protocol === "http:") return "80";
+  return "";
+}
+
 function netUriWithinPrefix(requested, allowed) {
+  if (!hasAuthority(requested) || !hasAuthority(allowed)) return false;
   if (requested.protocol !== allowed.protocol) return false;
   if (requested.hostname !== allowed.hostname) return false;
-  if (requested.port !== allowed.port) return false;
+  if (effectivePort(requested) !== effectivePort(allowed)) return false;
   if (requested.username !== allowed.username || requested.password !== allowed.password) return false;
   if (requested.hash || allowed.search || allowed.hash) return false;
 

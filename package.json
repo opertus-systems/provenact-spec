@@ -5,6 +5,7 @@
   "description": "Normative Provenact protocol/specification and conformance vectors",
   "license": "(MIT OR Apache-2.0)",
   "scripts": {
+    "test": "npm run conformance",
     "lint": "node tools/lint-json.mjs",
     "conformance": "node tools/run-conformance.mjs",
     "check": "npm run lint && npm run conformance",
