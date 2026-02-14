@@ -4,17 +4,20 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   spec-cli-parity:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout provenact-spec
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           path: provenact-spec
 
       - name: Checkout provenact-cli mirror
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
         with:
           repository: opertus-systems/provenact-cli
           path: provenact-cli
@@ -32,7 +35,7 @@ jobs:
           provenact-spec/tools/generate-sync-manifest.sh spec-cli "$GITHUB_WORKSPACE/provenact-cli" "$GITHUB_WORKSPACE/sync-manifest.spec-cli.json"
 
       - name: Upload sync manifest
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: sync-manifest-spec-cli
           path: ${{ github.workspace }}/sync-manifest.spec-cli.json
